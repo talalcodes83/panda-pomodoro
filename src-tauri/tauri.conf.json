@@ -2,12 +2,12 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
+    "devPath": "http://localhost:5173",
     "distDir": "../dist",
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "Cute Pomodoro Timer",
+    "productName": "CutePomodoroTimer",
     "version": "1.0.0"
   },
   "tauri": {
@@ -32,7 +32,7 @@
         "removeDir": true,
         "removeFile": true,
         "renameFile": true,
-        "scope": ["$APPDATA/*", "$MUSIC/*", "$DOCUMENT/*"]
+        "scope": ["$APPDATA/**", "$MUSIC/**", "$DOCUMENT/**"]
       },
       "http": {
         "all": true,
@@ -41,36 +41,37 @@
       "notification": {
         "all": true
       },
-      "store": {
-        "all": true
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "startDragging": true
       }
     },
     "bundle": {
-      "active": true,
+      "active": false,
       "targets": "all",
-      "identifier": "com.talalcodes83.cutepomodorotimer",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
+      "identifier": "com.talalcodes83.cutepomodorotimer"
     },
     "security": {
       "csp": null
     },
-    "windows": [
+      "windows": [
       {
         "fullscreen": false,
         "resizable": false,
         "width": 300,
-        "height": 400,
+        "height": 550,
         "title": "Cute Pomodoro Timer",
         "alwaysOnTop": true,
         "decorations": false,
         "transparent": true,
-        "skipTaskbar": true
+        "skipTaskbar": false
       }
     ]
   }

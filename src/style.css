@@ -4,17 +4,22 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  width: 300px;
+  height: 550px;
   margin: 0;
-  font-family: 'Courier New', monospace;
+  padding: 0;
   overflow: hidden;
+  font-family: 'Courier New', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
-  width: 100vw;
-  height: 100vh;
+  width: 300px;
+  height: 550px;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 

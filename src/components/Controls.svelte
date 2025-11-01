@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TimerState } from "../stores/timerStore";
   import { createEventDispatcher } from "svelte";
+  import { appWindow } from "@tauri-apps/api/window";
 
   export let state: TimerState;
   const dispatch = createEventDispatcher();
@@ -21,6 +22,14 @@
     dispatch("settings");
   }
 
+  async function handleClose() {
+    try {
+      await appWindow.close();
+    } catch (error) {
+      console.error("Failed to close window:", error);
+    }
+  }
+
   $: icon = state === "running" ? "⏸" : "▶";
 </script>
 
@@ -34,12 +43,16 @@
   <button class="control-btn" on:click={handleSettings} title="Settings">
     <span class="btn-icon">⚙</span>
   </button>
+  <button class="control-btn close-btn" on:click={handleClose} title="Close">
+    <span class="btn-icon">✕</span>
+  </button>
 </div>
 
 <style>
   .controls {
     display: flex;
     gap: 10px;
+    -webkit-app-region: no-drag;
   }
 
   .control-btn {
@@ -81,6 +94,14 @@
 
   .control-btn.running:hover {
     background: #22c55e;
+  }
+
+  .control-btn.close-btn {
+    background: #f5576c;
+  }
+
+  .control-btn.close-btn:hover {
+    background: #e63946;
   }
 </style>
 

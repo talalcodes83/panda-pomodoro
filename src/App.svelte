@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { appWindow } from "@tauri-apps/api/window";
   import PomodoroTimer from "./components/PomodoroTimer.svelte";
   import MusicPlayer from "./components/MusicPlayer.svelte";
   import { timerStore } from "./stores/timerStore";
   import { settingsStore } from "./stores/settingsStore";
 
   let showMusicPlayer = false;
+  let isDragging = false;
 
   onMount(() => {
     // Initialize stores
@@ -15,32 +17,51 @@
   function toggleMusicPlayer() {
     showMusicPlayer = !showMusicPlayer;
   }
+
+  async function handleMouseDown(e: MouseEvent) {
+    // Only start dragging if not clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || 
+        target.closest('button') || target.closest('input') || 
+        target.closest('.controls') || target.closest('.settings-panel') ||
+        target.closest('.music-player')) {
+      return;
+    }
+    
+    isDragging = true;
+    try {
+      await appWindow.startDragging();
+    } catch (error) {
+      console.error("Failed to start dragging:", error);
+    }
+  }
 </script>
 
-<main class="app">
+<main class="app" on:mousedown={handleMouseDown} role="application">
   <div class="container">
     <PomodoroTimer />
     <button class="music-toggle" on:click={toggleMusicPlayer} title="Toggle Music Player">
       {showMusicPlayer ? "🎵" : "🎶"}
     </button>
-    {#if showMusicPlayer}
-      <MusicPlayer />
-    {/if}
+    <MusicPlayer visible={showMusicPlayer} />
   </div>
 </main>
 
 <style>
   .app {
-    width: 100vw;
-    height: 100vh;
+    width: 300px;
+    height: 550px;
     overflow: hidden;
     background: transparent;
     font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 0;
+    cursor: default;
   }
 
   .container {
-    width: 300px;
-    height: 400px;
+    width: 100%;
+    height: 100%;
     position: relative;
   }
 
@@ -61,6 +82,7 @@
     transition: all 0.2s;
     z-index: 100;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    -webkit-app-region: no-drag;
   }
 
   .music-toggle:hover {

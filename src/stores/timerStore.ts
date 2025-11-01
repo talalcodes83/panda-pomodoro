@@ -39,13 +39,24 @@ function createTimerStore() {
     start: () => {
       update((timer) => {
         if (timer.state === "idle" || timer.state === "paused") {
-          if (intervalId) clearInterval(intervalId);
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
           intervalId = window.setInterval(() => {
             update((current) => {
               if (current.remainingSeconds > 0) {
                 return { ...current, remainingSeconds: current.remainingSeconds - 1 };
               } else {
-                timerStore.completeSession();
+                // Clear interval immediately and complete session
+                if (intervalId) {
+                  clearInterval(intervalId);
+                  intervalId = null;
+                }
+                // Call completeSession asynchronously to avoid re-entry issues
+                setTimeout(() => {
+                  timerStore.completeSession();
+                }, 0);
                 return current;
               }
             });
@@ -105,21 +116,24 @@ function createTimerStore() {
               ...timer,
               mode: "complete",
               state: "idle",
+              remainingSeconds: 0,
             };
           } else {
             // Switch to break
             invoke("play_sound", { soundType: "round_complete" }).catch(console.error);
             
+            const breakSeconds = settings.breakTime * 60;
+            
             // Auto-start break after a short delay
             setTimeout(() => {
               timerStore.start();
-            }, 1000);
+            }, 1500);
             
             return {
               ...timer,
               mode: "break",
               state: "idle",
-              remainingSeconds: settings.breakTime * 60,
+              remainingSeconds: breakSeconds,
               currentRound: timer.currentRound + 1,
             };
           }
@@ -127,11 +141,13 @@ function createTimerStore() {
           // Break complete, back to study
           invoke("play_sound", { soundType: "start" }).catch(console.error);
           
+          const studySeconds = settings.studyTime * 60;
+          
           return {
             ...timer,
             mode: "study",
             state: "idle",
-            remainingSeconds: settings.studyTime * 60,
+            remainingSeconds: studySeconds,
           };
         }
       });

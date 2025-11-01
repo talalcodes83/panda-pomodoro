@@ -66,8 +66,8 @@
   {#if showSettings}
     <SettingsPanel 
       on:close={toggleSettings}
-      on:save={(e) => {
-        settingsStore.save(e.detail);
+      on:save={async (e) => {
+        await settingsStore.save(e.detail);
         timerStore.loadSettings();
         toggleSettings();
       }}
@@ -93,6 +93,13 @@
     justify-content: space-between;
     position: relative;
     transition: background 0.3s ease;
+  }
+
+  /* Make buttons and interactive elements non-draggable */
+  .timer-container :global(button),
+  .timer-container :global(input),
+  .timer-container :global(.controls) {
+    -webkit-app-region: no-drag;
   }
 
   .study-mode {

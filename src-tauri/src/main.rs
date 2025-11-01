@@ -10,8 +10,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_app_data_dir,
             download_youtube_audio,
-            get_audio_path,
-            play_sound
+            play_sound,
+            ensure_dir,
+            list_files
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -9,11 +9,11 @@
 </script>
 
 <div class="character-container" class:animated={state === "running"}>
-  <div class="character" class:expression-{expression}>
+  <div class="character" class:expression-focused={expression === "focused"} class:expression-excited={expression === "excited"} class:expression-happy={expression === "happy"} class:expression-idle={expression === "idle"}>
     <div class="face">
       <div class="eye left-eye"></div>
       <div class="eye right-eye"></div>
-      <div class="mouth" class:mouth-{expression}></div>
+      <div class="mouth" class:mouth-happy={expression === "happy"} class:mouth-excited={expression === "excited"} class:mouth-focused={expression === "focused"}></div>
     </div>
   </div>
 </div>
@@ -60,6 +60,14 @@
 
   .character.expression-excited {
     animation: bounce 0.5s ease-in-out infinite;
+  }
+
+  .character.expression-happy {
+    /* Happy expression styling */
+  }
+
+  .character.expression-idle {
+    /* Idle expression styling */
   }
 
   @keyframes pulse {
@@ -127,19 +135,19 @@
     transition: all 0.3s ease;
   }
 
-  .mouth-mouth-happy {
+  .mouth.mouth-happy {
     border-radius: 0 0 20px 20px;
     height: 15px;
     width: 24px;
   }
 
-  .mouth-mouth-excited {
+  .mouth.mouth-excited {
     width: 24px;
     height: 18px;
     border-radius: 0 0 24px 24px;
   }
 
-  .mouth-mouth-focused {
+  .mouth.mouth-focused {
     width: 18px;
     height: 10px;
   }
