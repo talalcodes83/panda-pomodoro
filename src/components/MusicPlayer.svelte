@@ -13,7 +13,7 @@
   function playClickSound() {
     const audio = new Audio(clickSound);
     audio.volume = 1.0;
-    audio.currentTime = 0.12; // Skip first 120ms
+    audio.currentTime = 0.15; // Skip first 150ms
     audio.play().catch(console.error);
   }
 
@@ -104,6 +104,103 @@
         preloadTrack(track);
     }
   });
+  }
+  
+  // Helper function to set up audio event handlers
+  function setupAudioEventHandlers(element: HTMLAudioElement) {
+    // Set up onended handler for auto-play next track
+    element.onended = async () => {
+      console.log("Track ended, auto-playing next...");
+      currentTime = 0;
+      duration = 0;
+      currentTrackPath = null;
+      
+      // Auto-play next track (or loop to first if last track)
+      if (!currentPlaylist || !currentPlaylist.items || currentPlaylist.items.length === 0) return;
+      
+      const wasPlaying = isPlaying;
+      const isLastTrack = currentTrackIndex === currentPlaylist.items.length - 1;
+      
+      // Stop current audio
+      if (element) {
+        try {
+          element.pause();
+          element.currentTime = 0;
+        } catch (e) {}
+      }
+      
+      // Move to next track
+      if (isLastTrack) {
+        // Loop back to first track
+        currentTrackIndex = 0;
+      } else {
+        // Move to next track
+        currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.items.length;
+      }
+      
+      updateCurrentTrackTitle();
+      
+      // Load and play next track if it was playing
+      if (wasPlaying) {
+        // Clear current audio reference before loading new one
+        audioElement = null;
+        
+        await loadCurrentTrack(true); // true = auto-play after load
+        
+        // Ensure it plays and progress tracking is active
+        if (audioElement && audioElement.src) {
+          try {
+            // Ensure progress tracking is running
+            if (!progressInterval) {
+              progressInterval = window.setInterval(() => {
+                if (audioElement) {
+                  currentTime = audioElement.currentTime || 0;
+                  duration = audioElement.duration || 0;
+                }
+              }, 100);
+            }
+            
+            await audioElement.play();
+            isPlaying = true;
+            console.log("✓ Auto-played next track");
+          } catch (err) {
+            console.error("Failed to auto-play next track:", err);
+          }
+        }
+      }
+    };
+    
+    // Set up metadata handler - load duration immediately when available
+    element.onloadedmetadata = () => {
+      if (element) {
+        duration = element.duration || 0;
+        // Force UI update
+        currentTime = element.currentTime || 0;
+        // Ensure progress tracking is running
+        if (!progressInterval) {
+          progressInterval = window.setInterval(() => {
+            if (audioElement) {
+              currentTime = audioElement.currentTime || 0;
+              duration = audioElement.duration || 0;
+            }
+          }, 100);
+        }
+      }
+    };
+    
+    // Set up timeupdate handler for smoother progress updates
+    element.ontimeupdate = () => {
+      if (element) {
+        currentTime = element.currentTime || 0;
+        duration = element.duration || 0;
+      }
+    };
+    
+    // Try to get duration immediately if already loaded
+    if (element.readyState >= 1 && element.duration) {
+      duration = element.duration;
+      currentTime = element.currentTime || 0;
+    }
   }
 
   onDestroy(() => {
@@ -469,6 +566,24 @@
           audioElement.src = cached.blobUrl;
           audioElement.load();
           
+          // ALWAYS set up event handlers for cached tracks too!
+          setupAudioEventHandlers(audioElement);
+          
+          // Start progress tracking immediately
+          if (progressInterval) clearInterval(progressInterval);
+          progressInterval = window.setInterval(() => {
+            if (audioElement) {
+              currentTime = audioElement.currentTime || 0;
+              duration = audioElement.duration || 0;
+            }
+          }, 100);
+          
+          // Try to get duration immediately if already loaded
+          if (audioElement.readyState >= 1 && audioElement.duration) {
+            duration = audioElement.duration;
+            currentTime = audioElement.currentTime || 0;
+          }
+          
           // Auto-play if track was explicitly selected or was playing
           if (shouldAutoPlay) {
             audioElement.play().then(() => {
@@ -525,6 +640,24 @@
           audioElement.src = blobUrl;
           audioElement.load();
           
+          // ALWAYS set up event handlers AFTER src is set (for non-cached tracks)
+          setupAudioEventHandlers(audioElement);
+          
+          // Start progress tracking immediately
+          if (progressInterval) clearInterval(progressInterval);
+          progressInterval = window.setInterval(() => {
+            if (audioElement) {
+              currentTime = audioElement.currentTime || 0;
+              duration = audioElement.duration || 0;
+            }
+          }, 100);
+          
+          // Try to get duration immediately if already loaded
+          if (audioElement.readyState >= 1 && audioElement.duration) {
+            duration = audioElement.duration;
+            currentTime = audioElement.currentTime || 0;
+          }
+          
           // Auto-play if track was explicitly selected or was playing
           if (shouldAutoPlay) {
             audioElement.play().then(() => {
@@ -548,33 +681,8 @@
         console.error("Failed to read file:", error);
       });
       
-      // Set up event handlers immediately
-      audioElement.onended = () => {
-        currentTime = 0;
-        duration = 0;
-        currentTrackPath = null;
-        setTimeout(() => playNext(), 0);
-      };
-      
-      audioElement.onloadedmetadata = () => {
-        if (audioElement) duration = audioElement.duration || 0;
-      };
-      
-      audioElement.ontimeupdate = () => {
-        if (audioElement) {
-          currentTime = audioElement.currentTime || 0;
-          duration = audioElement.duration || 0;
-        }
-      };
-      
-      // Start progress tracking
-      if (progressInterval) clearInterval(progressInterval);
-      progressInterval = window.setInterval(() => {
-        if (audioElement) {
-          currentTime = audioElement.currentTime || 0;
-          duration = audioElement.duration || 0;
-        }
-      }, 100);
+      // Note: Event handlers for non-cached tracks are set up inside the .then() above
+      // after the src is set. Progress tracking is also started there.
       
       // Update UI immediately
       currentPlaylist = { ...currentPlaylist! };
@@ -791,12 +899,19 @@
       progressInterval = null;
     }
     
-    // Move to next track
-    currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.items.length;
+    // Move to next track, loop back to first if last track
+    const isLastTrack = currentTrackIndex === currentPlaylist.items.length - 1;
+    if (isLastTrack) {
+      // Loop back to first track
+      currentTrackIndex = 0;
+    } else {
+      // Move to next track
+      currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.items.length;
+    }
     updateCurrentTrackTitle();
     
     // Load and play immediately
-    await loadCurrentTrack();
+    await loadCurrentTrack(wasPlaying);
     const el = audioElement;
     if (wasPlaying && el) {
       try {

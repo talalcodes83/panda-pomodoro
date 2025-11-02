@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use tauri::AppHandle;
 
 #[derive(Debug, Serialize, Deserialize)]

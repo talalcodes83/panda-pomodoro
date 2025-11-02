@@ -20,7 +20,7 @@
   function playClickSound() {
     const audio = new Audio(clickSound);
     audio.volume = 1.0;
-    audio.currentTime = 0.12; // Skip first 120ms
+    audio.currentTime = 0.15; // Skip first 150ms
     audio.play().catch(console.error);
   }
 
