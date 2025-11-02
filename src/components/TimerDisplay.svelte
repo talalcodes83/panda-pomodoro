@@ -18,9 +18,6 @@
     <div class="rounds-text">
       Round: <span class="round-number">{currentRound}</span> / <span class="round-number">{totalRounds}</span>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" style="width: {progress}%"></div>
-    </div>
   </div>
 </div>
 
@@ -31,23 +28,19 @@
   }
 
   .time-text {
-    font-size: 36px;
+    font-size: 28px;
     font-weight: bold;
     color: #fff;
-    text-shadow: 
-      2px 2px 0 #333,
-      -1px -1px 0 #333,
-      1px -1px 0 #333,
-      -1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     letter-spacing: 2px;
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', monospace;
     margin-bottom: 5px;
   }
 
   .mode-text {
-    font-size: 12px;
+    font-size: 10px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     margin-bottom: 10px;
     font-weight: bold;
   }
@@ -57,33 +50,16 @@
   }
 
   .rounds-text {
-    font-size: 11px;
+    font-size: 9px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     margin-bottom: 5px;
     font-weight: bold;
   }
 
   .round-number {
-    font-size: 13px;
+    font-size: 10px;
     font-weight: bold;
-  }
-
-  .progress-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px solid #333;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4ade80, #22c55e);
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
   }
 </style>
 

@@ -10,9 +10,22 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: 'Courier New', monospace;
+  background: transparent;
+  font-family: 'Press Start 2P', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply pixel font and faint shadow to all text */
+*, *::before, *::after {
+  font-family: 'Press Start 2P', monospace;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Override for elements that need no shadow or different shadow */
+button, input, textarea, select {
+  font-family: 'Press Start 2P', monospace;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 #app {
@@ -21,5 +34,6 @@ html, body {
   overflow: hidden;
   margin: 0;
   padding: 0;
+  background: transparent;
 }
 

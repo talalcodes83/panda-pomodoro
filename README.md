@@ -1,6 +1,8 @@
-# 🍅 Cute Pomodoro Timer
+# 🐼 Panda-Pomodoro Timer
 
-A delightful pixel art style pomodoro timer built with **Tauri + Svelte + TypeScript**. Features cute animations, sound effects, and a built-in music player with YouTube download capability!
+A delightful pixel art style pomodoro timer built with **Tauri + Svelte + TypeScript**. Features cute panda animations, sound effects, and a built-in music player with YouTube download capability!
+
+**By Talal**
 
 ![Pomodoro Timer](https://img.shields.io/badge/version-1.0.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -42,8 +44,8 @@ A delightful pixel art style pomodoro timer built with **Tauri + Svelte + TypeSc
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/talalcodes83/cute-pomodoro-timer.git
-cd cute-pomodoro-timer
+git clone https://github.com/YOUR_USERNAME/panda-pomodoro.git
+cd panda-pomodoro
 ```
 
 2. Install dependencies:
@@ -141,7 +143,7 @@ This project is licensed under the MIT License.
 
 ## 👤 Author
 
-**talalcodes83**
+**Talal**
 
 ## 🙏 Acknowledgments
 

@@ -1,6 +1,7 @@
 import { writable, get } from "svelte/store";
 import { settingsStore } from "./settingsStore";
 import { invoke } from "@tauri-apps/api/tauri";
+import successSound from "../assets/sounds/success-221935.mp3";
 
 export type TimerMode = "study" | "break" | "complete";
 export type TimerState = "idle" | "running" | "paused";
@@ -102,10 +103,31 @@ function createTimerStore() {
       update((timer) => {
         const settings = get(settingsStore);
         
+        // Play timer completion sound at normal volume
+        const audio = new Audio(successSound);
+        audio.volume = 1.0;
+        audio.play().catch(console.error);
+        
         if (timer.mode === "study") {
+          // Study complete, switch to break (same round)
+          const breakSeconds = settings.breakTime * 60;
+          
+          // Auto-start break after a short delay
+          setTimeout(() => {
+            timerStore.start();
+          }, 1500);
+          
+          return {
+            ...timer,
+            mode: "break",
+            state: "idle",
+            remainingSeconds: breakSeconds,
+            // Keep currentRound the same - round = study + break
+          };
+        } else {
+          // Break complete
           if (timer.currentRound >= timer.totalRounds) {
-            // All rounds complete
-            invoke("play_sound", { soundType: "complete" }).catch(console.error);
+            // Last break of last round - all rounds complete
             
             // Reset after 5 seconds
             setTimeout(() => {
@@ -119,36 +141,22 @@ function createTimerStore() {
               remainingSeconds: 0,
             };
           } else {
-            // Switch to break
-            invoke("play_sound", { soundType: "round_complete" }).catch(console.error);
+            // Break complete, start next round (next study session)
+            const studySeconds = settings.studyTime * 60;
             
-            const breakSeconds = settings.breakTime * 60;
-            
-            // Auto-start break after a short delay
+            // Auto-start next study session after a short delay
             setTimeout(() => {
               timerStore.start();
             }, 1500);
             
             return {
               ...timer,
-              mode: "break",
+              mode: "study",
               state: "idle",
-              remainingSeconds: breakSeconds,
-              currentRound: timer.currentRound + 1,
+              remainingSeconds: studySeconds,
+              currentRound: timer.currentRound + 1, // Increment round here
             };
           }
-        } else {
-          // Break complete, back to study
-          invoke("play_sound", { soundType: "start" }).catch(console.error);
-          
-          const studySeconds = settings.studyTime * 60;
-          
-          return {
-            ...timer,
-            mode: "study",
-            state: "idle",
-            remainingSeconds: studySeconds,
-          };
         }
       });
     },

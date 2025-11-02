@@ -35,8 +35,28 @@ pub async fn download_youtube_audio(
     println!("[Download] Starting download for URL: {}", url);
     println!("[Download] Output directory: {}", output_dir);
     
-    // Check if yt-dlp is available
-    let yt_dlp_check = Command::new("yt-dlp")
+    // Check if yt-dlp is available (try standalone .exe first, then system command)
+    let yt_dlp_path = if cfg!(windows) {
+        // Check for bundled yt-dlp.exe in app directory
+        if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let bundled_ytdlp = exe_dir.join("yt-dlp.exe");
+                if bundled_ytdlp.exists() {
+                    bundled_ytdlp.to_string_lossy().to_string()
+                } else {
+                    "yt-dlp".to_string()
+                }
+            } else {
+                "yt-dlp".to_string()
+            }
+        } else {
+            "yt-dlp".to_string()
+        }
+    } else {
+        "yt-dlp".to_string()
+    };
+    
+    let yt_dlp_check = Command::new(&yt_dlp_path)
         .arg("--version")
         .output();
 
@@ -124,7 +144,11 @@ pub async fn download_youtube_audio(
     
     // Use yt-dlp to download audio with Android client (most reliable)
     println!("[Download] Running yt-dlp download command...");
-    let output = Command::new("yt-dlp")
+    let mut download_cmd = Command::new(&yt_dlp_path);
+    if cfg!(windows) {
+        download_cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW - hide terminal
+    }
+    let output = download_cmd
         .arg("--extract-audio")
         .arg("--audio-format")
         .arg("mp3")

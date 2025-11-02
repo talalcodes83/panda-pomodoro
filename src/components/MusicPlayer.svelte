@@ -2,8 +2,20 @@
   import { onMount, onDestroy } from "svelte";
   import { invoke } from "@tauri-apps/api/tauri";
   import { readTextFile, writeTextFile, readBinaryFile } from "@tauri-apps/api/fs";
-  import { open } from "@tauri-apps/api/dialog";
-  import { convertFileSrc } from "@tauri-apps/api/tauri";
+  import previousIcon from "../assets/buttons/music/previous.png";
+  import nextIcon from "../assets/buttons/music/next.png";
+  import playMusicIcon from "../assets/buttons/music/play.png";
+  import pauseMusicIcon from "../assets/buttons/music/pause.png";
+  import downloadIcon from "../assets/buttons/music/download.png";
+  import clickSound from "../assets/sounds/click.mp3";
+
+  // Play click sound at normal volume
+  function playClickSound() {
+    const audio = new Audio(clickSound);
+    audio.volume = 1.0;
+    audio.currentTime = 0.12; // Skip first 120ms
+    audio.play().catch(console.error);
+  }
 
   interface PlaylistItem {
     id: string;
@@ -73,7 +85,7 @@
         : ext === 'mp3' ? 'audio/mpeg'
         : undefined;
       
-      const blob = mimeType ? new Blob([fileData], { type: mimeType }) : new Blob([fileData]);
+      const blob = mimeType ? new Blob([fileData as BlobPart], { type: mimeType }) : new Blob([fileData as BlobPart]);
       const blobUrl = URL.createObjectURL(blob);
       
       blobCache.set(track.path, { blobUrl, blob });
@@ -90,8 +102,8 @@
     currentPlaylist.items.forEach((track) => {
       if (track.path) {
         preloadTrack(track);
-      }
-    });
+    }
+  });
   }
 
   onDestroy(() => {
@@ -117,7 +129,7 @@
         
         for (const filename of entries) {
           if (filename.endsWith(".json")) {
-            const content = await readTextFile(`${playlistsDir}/${filename}`, { encoding: "utf-8" });
+            const content = await readTextFile(`${playlistsDir}/${filename}`);
             const playlist: Playlist = JSON.parse(content);
             playlists.push(playlist);
           }
@@ -161,8 +173,7 @@
       const filename = playlist.name.toLowerCase().replace(/\s+/g, "-") + ".json";
       await writeTextFile(
         `${playlistsDir}/${filename}`,
-        JSON.stringify(playlist, null, 2),
-        { encoding: "utf-8" }
+        JSON.stringify(playlist, null, 2)
       );
     } catch (error) {
       console.error("Failed to save playlist:", error);
@@ -170,6 +181,7 @@
   }
 
   async function downloadFromYouTube() {
+    playClickSound();
     if (!youtubeUrl.trim()) {
       alert("Please enter a YouTube URL");
       return;
@@ -242,7 +254,9 @@
           const updatedItems = [...currentPlaylist.items, newItem];
           
           // Update the playlist reference in the playlists array too
-          const playlistIndex = playlists.findIndex(p => p.name === currentPlaylist.name);
+          if (!currentPlaylist) return;
+          const playlistName = currentPlaylist.name;
+          const playlistIndex = playlists.findIndex(p => p.name === playlistName);
           if (playlistIndex >= 0) {
             playlists[playlistIndex] = {
               ...currentPlaylist,
@@ -285,7 +299,7 @@
   }
 
   // Clean up old audio element and resources - SYNCHRONOUS cleanup
-  function stopAndCleanupAudioElement(element: HTMLAudioElement | null, blobUrl: string | null, blob: Blob | null) {
+  function stopAndCleanupAudioElement(element: HTMLAudioElement | null, blobUrl: string | null, _blob: Blob | null) {
     if (!element) return;
     
     // CRITICAL: Stop playback IMMEDIATELY and synchronously
@@ -388,7 +402,7 @@
     
     // Clear references immediately
     const previousTrackPath = currentTrackPath;
-    audioElement = null;
+      audioElement = null;
     currentBlobUrl = null;
     currentBlob = null;
     isPlaying = false;
@@ -403,24 +417,17 @@
     }
     
     try {
-      if (!currentPlaylist?.items?.length) return;
+      if (!currentPlaylist || !currentPlaylist.items || !currentPlaylist.items.length) return;
       if (currentTrackIndex >= currentPlaylist.items.length) {
         currentTrackIndex = 0;
-      }
+    }
 
-      const track = currentPlaylist.items[currentTrackIndex];
+    const track = currentPlaylist.items[currentTrackIndex];
       if (!track?.path) return;
       
       if (signal.aborted) return;
       
       currentTrackPath = track.path;
-      
-      // Declare blob and blobUrl
-      let blob: Blob | null = null;
-      let blobUrl: string | null = null;
-      let audioUrl: string;
-      
-      const oldBlobUrlForCleanup = oldBlobUrl;
       
       // Check if this track is already loaded (avoid reloading!)
       if (previousTrackPath === track.path && oldAudioElement && oldAudioElement.readyState >= 2) {
@@ -430,7 +437,7 @@
         currentTrackPath = track.path;
         if (progressInterval) clearInterval(progressInterval);
         progressInterval = window.setInterval(() => {
-          if (audioElement) {
+        if (audioElement) {
             currentTime = audioElement.currentTime || 0;
             duration = audioElement.duration || 0;
           }
@@ -447,7 +454,7 @@
       // Create audio element immediately (don't wait for file!)
       audioElement = new Audio();
       audioElement.preload = "auto";
-      audioElement.volume = volume;
+          audioElement.volume = volume;
       audioElement.muted = false;
       audioElement.onerror = () => { currentTrackPath = null; };
       
@@ -499,7 +506,7 @@
           : undefined;
         
         // Create blob and URL
-        const blob = mimeType ? new Blob([fileData], { type: mimeType }) : new Blob([fileData]);
+        const blob = mimeType ? new Blob([fileData as BlobPart], { type: mimeType }) : new Blob([fileData as BlobPart]);
         const blobUrl = URL.createObjectURL(blob);
         
         if (signal.aborted) {
@@ -583,6 +590,7 @@
   }
 
   async function togglePlayPause() {
+    playClickSound();
     // Prevent spam clicking
     if (isPlayingPending) {
       console.log("Play/Pause already in progress, ignoring");
@@ -637,7 +645,7 @@
       // Ensure progress tracking is running
       if (!progressInterval) {
         progressInterval = window.setInterval(() => {
-          if (audioElement) {
+    if (audioElement) {
             currentTime = audioElement.currentTime || 0;
             duration = audioElement.duration || 0;
           }
@@ -680,6 +688,7 @@
   }
 
   function handleProgressClick(e: MouseEvent) {
+    playClickSound();
     if (!audioElement || !duration) return;
     const progressBar = e.currentTarget as HTMLElement;
     const rect = progressBar.getBoundingClientRect();
@@ -688,6 +697,21 @@
     const newTime = percent * duration;
     audioElement.currentTime = newTime;
     currentTime = newTime;
+  }
+
+  function handleProgressKeydown(e: Event) {
+    const ke = e as unknown as KeyboardEvent;
+    if (ke.key === 'Enter' || ke.key === ' ') {
+      ke.preventDefault();
+      // Create a synthetic MouseEvent for handleProgressClick
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      const syntheticEvent = {
+        currentTarget: target,
+        clientX: rect.left + rect.width / 2,
+      } as unknown as MouseEvent;
+      handleProgressClick(syntheticEvent);
+    }
   }
 
   function updateCurrentTrackTitle() {
@@ -709,11 +733,9 @@
     console.log("Updated currentTrackTitle to:", currentTrackTitle);
   }
 
-  function getCurrentTrackTitle(): string {
-    return currentTrackTitle;
-  }
 
   async function playNext() {
+    playClickSound();
     // Prevent spam clicking
     if (isTrackLoading) {
       console.log("Already loading track, ignoring playNext");
@@ -775,9 +797,10 @@
     
     // Load and play immediately
     await loadCurrentTrack();
-    if (wasPlaying && audioElement) {
+    const el = audioElement;
+    if (wasPlaying && el) {
       try {
-        await audioElement.play();
+        await (el as HTMLAudioElement).play();
         isPlaying = true;
       } catch (err) {
         isPlaying = false;
@@ -786,6 +809,7 @@
   }
 
   async function playPrevious() {
+    playClickSound();
     if (isTrackLoading) return;
     if (!currentPlaylist?.items?.length) return;
     
@@ -826,9 +850,10 @@
     
     // Load and play immediately
     await loadCurrentTrack();
-    if (wasPlaying && audioElement) {
+    const el = audioElement;
+    if (wasPlaying && el) {
       try {
-        await audioElement.play();
+        await (el as HTMLAudioElement).play();
         isPlaying = true;
       } catch (err) {
         isPlaying = false;
@@ -837,6 +862,7 @@
   }
 
   async function selectTrack(index: number) {
+    playClickSound();
     if (isTrackLoading) return;
     if (!currentPlaylist?.items || index < 0 || index >= currentPlaylist.items.length) return;
     
@@ -877,9 +903,10 @@
     
     // Also try to play immediately if blob URL is already ready
     // This handles the case where file reading completes before await resolves
-    if (audioElement && audioElement.src && audioElement.readyState >= 1) {
+    const el = audioElement as HTMLAudioElement | null;
+    if (el && el.src && el.readyState >= 1) {
       try {
-        await audioElement.play();
+        await el.play();
         isPlaying = true;
       } catch (err) {
         // If play fails, the blob will auto-play when ready via the Promise callback
@@ -889,6 +916,7 @@
   }
 
   function removeTrack(index: number) {
+    playClickSound();
     if (currentPlaylist) {
       currentPlaylist.items.splice(index, 1);
       if (currentTrackIndex >= currentPlaylist.items.length) {
@@ -999,7 +1027,11 @@
       disabled={isDownloading || !youtubeUrl.trim()}
         title={isDownloading ? "Downloading..." : "Download"}
     >
-        {isDownloading ? "⏳" : "⬇"}
+        {#if isDownloading}
+          ⏳
+        {:else}
+          <img src={downloadIcon} alt="Download" class="btn-image" />
+        {/if}
     </button>
     </div>
     {#if downloadProgress}
@@ -1011,9 +1043,9 @@
       <div class="playlist-header">
       <span>{currentPlaylist ? currentPlaylist.name : "Study Music"}</span>
       <span class="track-count">{currentPlaylist?.items?.length || 0} tracks</span>
-    </div>
-    
-    <div class="playlist">
+      </div>
+
+      <div class="playlist">
       {#if currentPlaylist && currentPlaylist.items && currentPlaylist.items.length > 0}
         {#each currentPlaylist.items as item, index}
           <div
@@ -1043,7 +1075,7 @@
       {:else}
         <div class="empty-playlist">
           <p>📀 Your tracks will appear here</p>
-        </div>
+      </div>
       {/if}
     </div>
 
@@ -1060,12 +1092,7 @@
             aria-valuenow={currentTime || 0}
             aria-label="Audio progress"
             on:click={handleProgressClick}
-            on:keydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleProgressClick(e);
-              }
-            }}
+            on:keydown={handleProgressKeydown}
           >
             <div class="progress-fill" style="width: {duration > 0 ? (currentTime / duration * 100) : 0}%"></div>
           </div>
@@ -1077,11 +1104,19 @@
       </div>
       
       <div class="player-controls">
-        <button class="control-btn" on:click={playPrevious} title="Previous">⏮</button>
-        <button class="control-btn play-btn" on:click={togglePlayPause} title={isPlaying ? "Pause" : "Play"}>
-          {isPlaying ? "⏸" : "▶"}
+        <button class="control-btn" on:click={playPrevious} title="Previous">
+          <img src={previousIcon} alt="Previous" class="btn-image" />
         </button>
-        <button class="control-btn" on:click={playNext} title="Next">⏭</button>
+        <button class="control-btn play-btn" on:click={togglePlayPause} title={isPlaying ? "Pause" : "Play"}>
+          {#if isPlaying}
+            <img src={pauseMusicIcon} alt="Pause" class="btn-image" />
+  {:else}
+            <img src={playMusicIcon} alt="Play" class="btn-image" />
+          {/if}
+        </button>
+        <button class="control-btn" on:click={playNext} title="Next">
+          <img src={nextIcon} alt="Next" class="btn-image" />
+        </button>
       </div>
 
       <div class="volume-control">
@@ -1118,8 +1153,8 @@
     width: 300px;
     height: 500px;
     max-height: 500px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 4px solid #333;
+    background: #ffcbd7;
+    border: none;
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
@@ -1136,10 +1171,10 @@
   }
 
   .player-header {
-    font-size: 16px;
+    font-size: 8px;
     font-weight: bold;
     color: #fff;
-    text-shadow: 2px 2px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     margin-bottom: 15px;
     text-align: center;
     flex-shrink: 0;
@@ -1159,10 +1194,10 @@
   .youtube-input {
     flex: 1;
     padding: 8px;
-    border: 3px solid #333;
+    border: none;
     border-radius: 4px;
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
+    font-size: 8px;
+    font-family: 'Press Start 2P', monospace;
     background: #fff;
     min-width: 0;
   }
@@ -1171,14 +1206,14 @@
     width: 40px;
     height: 40px;
     padding: 0;
-    border: 3px solid #333;
+    border: none;
     border-radius: 4px;
     background: #4ade80;
     color: #fff;
     font-weight: bold;
     cursor: pointer;
-    font-family: 'Courier New', monospace;
-    font-size: 16px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1198,9 +1233,9 @@
   }
 
   .download-progress {
-    font-size: 11px;
+    font-size: 9px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     margin-top: 5px;
     text-align: center;
   }
@@ -1217,31 +1252,31 @@
   .playlist-header {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 8px;
     font-weight: bold;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     margin-bottom: 10px;
   }
 
   .track-count {
-    font-size: 11px;
+    font-size: 9px;
   }
 
   .current-track {
     margin-bottom: 15px;
     padding: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #fafafa;
     border-radius: 6px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: none;
     flex-shrink: 0;
   }
 
   .track-name {
-    font-size: 13px;
+    font-size: 8px;
     font-weight: bold;
-    color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    color: #000;
+    text-shadow: none;
     margin-bottom: 8px;
     text-align: center;
     white-space: nowrap;
@@ -1256,18 +1291,18 @@
   .progress-bar {
     width: 100%;
     height: 8px;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     cursor: pointer;
     position: relative;
-    border: 2px solid #333;
+    border: 1px solid rgba(0, 0, 0, 0.3);
     margin-bottom: 5px;
     overflow: hidden;
   }
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+    background: linear-gradient(90deg, #6b3fa0 0%, #4a2c6b 100%);
     border-radius: 2px;
     transition: width 0.1s linear;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1276,14 +1311,14 @@
   .time-info {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
-    color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    font-size: 8px;
+    color: #000;
+    text-shadow: none;
     margin-top: 3px;
   }
 
   .current-time, .total-time {
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', monospace;
   }
 
   .player-controls {
@@ -1295,18 +1330,25 @@
   }
 
   .control-btn {
-    width: 36px;
-    height: 36px;
-    border: 3px solid #333;
+    width: 40px;
+    height: 40px;
+    border: none;
     border-radius: 6px;
     background: #fff;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
     box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
   }
 
   .control-btn:hover {
@@ -1315,9 +1357,9 @@
   }
 
   .play-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
     background: #4ade80;
   }
 
@@ -1330,9 +1372,9 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 10px;
-    font-size: 12px;
+    font-size: 8px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
   }
 
@@ -1347,9 +1389,9 @@
     min-height: 0;
     max-height: 350px;
     margin-bottom: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: none;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #e0e0e0;
     padding: 5px;
   }
   
@@ -1377,26 +1419,26 @@
     align-items: center;
     padding: 8px;
     margin-bottom: 5px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #333;
+    background: #fafafa;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .playlist-item:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #f0f0f0;
   }
 
   .playlist-item.active {
-    background: rgba(74, 222, 128, 0.3);
-    border-color: #4ade80;
+    background: #fafafa;
+    border: 1px solid rgba(0, 0, 0, 0.3);
   }
 
   .track-title {
-    font-size: 11px;
-    color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    font-size: 9px;
+    color: #000;
+    text-shadow: none;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1409,7 +1451,7 @@
     border: none;
     background: transparent;
     color: #fff;
-    font-size: 14px;
+    font-size: 11px;
     cursor: pointer;
     padding: 0;
     margin-left: 8px;
@@ -1424,20 +1466,20 @@
     padding: 20px;
     text-align: center;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
-    font-size: 12px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 8px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     margin-bottom: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: none;
   }
 
   .empty-playlist {
     text-align: center;
     padding: 20px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
-    font-size: 12px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 8px;
   }
 </style>
 

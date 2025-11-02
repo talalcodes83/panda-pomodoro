@@ -8,6 +8,7 @@
   import Controls from "./Controls.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
 
+  export let hideWatermarks = false;
   let showSettings = false;
   let progress = 0;
 
@@ -24,8 +25,10 @@
     })();
   }
 
-  onMount(() => {
-    settingsStore.load();
+  onMount(async () => {
+    // Load settings first (in case App.svelte hasn't completed yet)
+    await settingsStore.load();
+    // Then update timer with loaded settings
     timerStore.loadSettings();
   });
 
@@ -73,16 +76,21 @@
       }}
     />
   {/if}
+
+  {#if !hideWatermarks}
+    <div class="watermark watermark-top-left">PANDA-POMODORO</div>
+    <div class="watermark watermark-bottom-right">By Talal</div>
+  {/if}
 </div>
 
 <style>
   .timer-container {
     width: 300px;
     height: 300px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 4px solid #333;
+    background: #ffcbd7;
+    border: none;
     border-radius: 8px;
-    padding: 15px;
+    padding: 10px;
     box-shadow: 
       0 0 0 2px #222,
       inset 0 0 0 2px #fff,
@@ -103,15 +111,37 @@
   }
 
   .study-mode {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffcbd7;
   }
 
   .break-mode {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: #ffa6ba;
   }
 
   .complete-mode {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: #ffcbd7;
+  }
+
+  .watermark {
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    color: rgba(0, 0, 0, 0.7);
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 1);
+    pointer-events: none;
+    z-index: 1;
+    -webkit-app-region: no-drag;
+  }
+
+  .watermark-top-left {
+    top: 8px;
+    left: 8px;
+    font-size: 8px;
+  }
+
+  .watermark-bottom-right {
+    bottom: 8px;
+    right: 8px;
+    font-size: 6px;
   }
 </style>
 

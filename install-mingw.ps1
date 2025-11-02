@@ -33,3 +33,7 @@ Write-Host "MinGW installed! Please restart your terminal." -ForegroundColor Gre
 
 
 
+
+
+
+

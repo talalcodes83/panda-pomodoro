@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { settingsStore } from "../stores/settingsStore";
   import type { Settings } from "../stores/settingsStore";
+  import clickSound from "../assets/sounds/click.mp3";
 
   const dispatch = createEventDispatcher();
   let settings: Settings = {
@@ -17,11 +18,21 @@
     })();
   });
 
+  // Play click sound at normal volume
+  function playClickSound() {
+    const audio = new Audio(clickSound);
+    audio.volume = 1.0;
+    audio.currentTime = 0.12; // Skip first 120ms
+    audio.play().catch(console.error);
+  }
+
   function handleSave() {
+    playClickSound();
     dispatch("save", settings);
   }
 
   function handleClose() {
+    playClickSound();
     dispatch("close");
   }
 </script>
@@ -62,7 +73,7 @@
       </div>
       <div class="setting-item">
         <label>
-          <input type="checkbox" bind:checked={settings.soundEnabled} />
+          <input type="checkbox" bind:checked={settings.soundEnabled} on:change={playClickSound} />
           Enable Sound Effects
         </label>
       </div>
@@ -89,8 +100,8 @@
   }
 
   .settings-panel {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 4px solid #333;
+    background: #ffcbd7;
+    border: none;
     border-radius: 8px;
     padding: 20px;
     width: 90%;
@@ -99,10 +110,10 @@
   }
 
   .settings-header {
-    font-size: 18px;
+    font-size: 11px;
     font-weight: bold;
     color: #fff;
-    text-shadow: 2px 2px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     text-align: center;
     margin-bottom: 15px;
   }
@@ -120,9 +131,9 @@
   }
 
   .setting-item label {
-    font-size: 12px;
+    font-size: 10px;
     color: #fff;
-    text-shadow: 1px 1px 0 #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     font-weight: bold;
   }
 
@@ -130,8 +141,8 @@
     padding: 8px;
     border: 3px solid #333;
     border-radius: 4px;
-    font-size: 14px;
-    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-family: 'Press Start 2P', monospace;
     background: #fff;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
@@ -159,13 +170,13 @@
   .close-btn {
     flex: 1;
     padding: 10px;
-    border: 3px solid #333;
+    border: none;
     border-radius: 4px;
     background: #fff;
     cursor: pointer;
     font-weight: bold;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
     transition: all 0.2s;
     box-shadow: 
       0 3px 0 rgba(0, 0, 0, 0.2),

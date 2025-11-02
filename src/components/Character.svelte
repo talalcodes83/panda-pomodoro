@@ -2,44 +2,78 @@
   import type { TimerMode } from "../stores/timerStore";
   import type { TimerState } from "../stores/timerStore";
 
+  import studyGif from "../assets/buttons/other/character-study-export.gif";
+  import breakGif from "../assets/buttons/other/character-break-export.gif";
+  
+  let gifElement: HTMLImageElement;
+
   export let mode: TimerMode;
   export let state: TimerState;
 
-  $: expression = mode === "break" ? "happy" : mode === "complete" ? "excited" : state === "running" ? "focused" : "idle";
+  // Determine which animation to show
+  $: characterImage = (() => {
+    if (mode === "study") {
+      return studyGif;
+    } else if (mode === "break") {
+      return breakGif;
+    }
+    // Complete mode - use study
+    return studyGif;
+  })();
+  
+  $: hasGif = characterImage !== undefined && characterImage !== null;
+
+  // Ensure GIF loops infinitely - just keep src set and let GIF animate naturally
+  $: if (gifElement && hasGif && characterImage) {
+    // Ensure src is always set - GIF will loop infinitely on its own
+    if (gifElement.src !== characterImage) {
+      gifElement.src = characterImage;
+    }
+  }
 </script>
 
-<div class="character-container" class:animated={state === "running"}>
-  <div class="character" class:expression-focused={expression === "focused"} class:expression-excited={expression === "excited"} class:expression-happy={expression === "happy"} class:expression-idle={expression === "idle"}>
+<div class="character-container">
+  {#if hasGif}
+    <img 
+      bind:this={gifElement} 
+      src={characterImage} 
+      alt="" 
+      class="character-sprite character-gif"
+    />
+  {:else}
+    <!-- Fallback to old CSS character -->
+    <div class="character" class:expression-focused={state === "running"} class:expression-happy={mode === "break"}>
     <div class="face">
       <div class="eye left-eye"></div>
       <div class="eye right-eye"></div>
-      <div class="mouth" class:mouth-happy={expression === "happy"} class:mouth-excited={expression === "excited"} class:mouth-focused={expression === "focused"}></div>
+        <div class="mouth" class:mouth-happy={mode === "break"} class:mouth-focused={state === "running"}></div>
+      </div>
     </div>
-  </div>
+  {/if}
 </div>
 
 <style>
   .character-container {
-    width: 80px;
-    height: 80px;
+    width: 180px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    flex-shrink: 0;
   }
 
-  .character-container.animated {
-    animation: float 3s ease-in-out infinite;
-  }
+  .character-sprite,
+  .character-gif {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    }
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
 
   .character {
     width: 60px;
@@ -62,13 +96,6 @@
     animation: bounce 0.5s ease-in-out infinite;
   }
 
-  .character.expression-happy {
-    /* Happy expression styling */
-  }
-
-  .character.expression-idle {
-    /* Idle expression styling */
-  }
 
   @keyframes pulse {
     0% {

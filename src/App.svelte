@@ -5,16 +5,27 @@
   import MusicPlayer from "./components/MusicPlayer.svelte";
   import { timerStore } from "./stores/timerStore";
   import { settingsStore } from "./stores/settingsStore";
+  import clickSound from "./assets/sounds/click.mp3";
 
   let showMusicPlayer = false;
   let isDragging = false;
 
-  onMount(() => {
-    // Initialize stores
+  onMount(async () => {
+    // Load settings first, then update timer
+    await settingsStore.load();
     timerStore.loadSettings();
   });
 
+  // Play click sound at normal volume
+  function playClickSound() {
+    const audio = new Audio(clickSound);
+    audio.volume = 1.0;
+    audio.currentTime = 0.12; // Skip first 120ms
+    audio.play().catch(console.error);
+  }
+
   function toggleMusicPlayer() {
+    playClickSound();
     showMusicPlayer = !showMusicPlayer;
   }
 
@@ -39,7 +50,7 @@
 
 <main class="app" on:mousedown={handleMouseDown} role="application">
   <div class="container">
-    <PomodoroTimer />
+    <PomodoroTimer hideWatermarks={showMusicPlayer} />
     <button class="music-toggle" on:click={toggleMusicPlayer} title="Toggle Music Player">
       {showMusicPlayer ? "🎵" : "🎶"}
     </button>
@@ -52,8 +63,8 @@
     width: 300px;
     height: 550px;
     overflow: hidden;
-    background: transparent;
-    font-family: 'Courier New', monospace;
+    background: transparent !important;
+    font-family: 'Press Start 2P', monospace;
     margin: 0;
     padding: 0;
     cursor: default;
@@ -63,6 +74,7 @@
     width: 100%;
     height: 100%;
     position: relative;
+    background: transparent;
   }
 
   .music-toggle {
@@ -71,7 +83,7 @@
     right: 10px;
     width: 32px;
     height: 32px;
-    border: 2px solid #333;
+    border: none;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.9);
     cursor: pointer;

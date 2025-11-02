@@ -25,8 +25,14 @@ dist-ssr
 
 # Tauri
 src-tauri/target
+src-tauri/target_build
+src-tauri/target_temp
 src-tauri/Cargo.lock
 
 # Build output
 build/
+dist_portable/
+
+# Distribution files (don't commit ZIP files)
+*.zip
 

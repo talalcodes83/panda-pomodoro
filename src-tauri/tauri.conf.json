@@ -54,7 +54,7 @@
       }
     },
     "bundle": {
-      "active": false,
+      "active": true,
       "targets": "all",
       "identifier": "com.talalcodes83.cutepomodorotimer"
     },

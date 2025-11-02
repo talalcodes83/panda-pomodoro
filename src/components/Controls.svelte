@@ -2,11 +2,26 @@
   import type { TimerState } from "../stores/timerStore";
   import { createEventDispatcher } from "svelte";
   import { appWindow } from "@tauri-apps/api/window";
+  import pauseIcon from "../assets/buttons/timer/pause.png";
+  import playIcon from "../assets/buttons/timer/play.png";
+  import resetIcon from "../assets/buttons/timer/reset.png";
+  import settingsIcon from "../assets/buttons/timer/settings.png";
+  import closeIcon from "../assets/buttons/timer/close.png";
+  import clickSound from "../assets/sounds/click.mp3";
 
   export let state: TimerState;
   const dispatch = createEventDispatcher();
 
+  // Play click sound at normal volume
+  function playClickSound() {
+    const audio = new Audio(clickSound);
+    audio.volume = 1.0;
+    audio.currentTime = 0.12; // Skip first 120ms
+    audio.play().catch(console.error);
+  }
+
   function handleStartPause() {
+    playClickSound();
     if (state === "idle" || state === "paused") {
       dispatch("start");
     } else {
@@ -15,62 +30,74 @@
   }
 
   function handleReset() {
+    playClickSound();
     dispatch("reset");
   }
 
   function handleSettings() {
+    playClickSound();
     dispatch("settings");
   }
 
   async function handleClose() {
+    playClickSound();
     try {
       await appWindow.close();
     } catch (error) {
       console.error("Failed to close window:", error);
     }
   }
-
-  $: icon = state === "running" ? "⏸" : "▶";
 </script>
 
 <div class="controls">
   <button class="control-btn" on:click={handleStartPause} title={state === "running" ? "Pause" : "Start"} class:running={state === "running"}>
-    <span class="btn-icon">{icon}</span>
+    {#if state === "running"}
+      <img src={pauseIcon} alt="Pause" class="btn-image" />
+    {:else}
+      <img src={playIcon} alt="Play" class="btn-image" />
+    {/if}
   </button>
   <button class="control-btn" on:click={handleReset} title="Reset">
-    <span class="btn-icon">↻</span>
+    <img src={resetIcon} alt="Reset" class="btn-image" />
   </button>
   <button class="control-btn" on:click={handleSettings} title="Settings">
-    <span class="btn-icon">⚙</span>
+    <img src={settingsIcon} alt="Settings" class="btn-image" />
   </button>
   <button class="control-btn close-btn" on:click={handleClose} title="Close">
-    <span class="btn-icon">✕</span>
+    <img src={closeIcon} alt="Close" class="btn-image" />
   </button>
 </div>
 
 <style>
   .controls {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     -webkit-app-region: no-drag;
   }
 
   .control-btn {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #333;
+    width: 35px;
+    height: 35px;
+    border: none;
     background: #fff;
     border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 12px;
     transition: all 0.2s;
     box-shadow: 
       0 3px 0 rgba(0, 0, 0, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  .btn-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
   }
 
   .control-btn:hover {
