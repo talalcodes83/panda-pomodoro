@@ -29,6 +29,10 @@ src-tauri/target_build
 src-tauri/target_temp
 src-tauri/Cargo.lock
 
+# Cargo config (platform-specific)
+.cargo/config.toml
+src-tauri/.cargo/config.toml
+
 # Build output
 build/
 dist_portable/

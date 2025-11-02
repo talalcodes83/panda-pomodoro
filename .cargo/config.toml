@@ -1,3 +1,0 @@
-# Using MSVC toolchain - requires Visual Studio Build Tools
-[build]
-target = "x86_64-pc-windows-msvc"
