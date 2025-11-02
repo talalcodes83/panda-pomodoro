@@ -1,22 +1,20 @@
 # 🐼 Panda-Pomodoro Timer
 
-A delightful pixel art style pomodoro timer built with **Tauri + Svelte + TypeScript**. Features cute panda animations, sound effects, and a built-in music player with YouTube download capability!
+A pixel art style pomodoro timer built with **Tauri + Svelte + TypeScript**. Features panda animations, sound effects, and a built-in music player with YouTube download capability
 
 **By Talal**
 
 ![Pomodoro Timer](https://img.shields.io/badge/version-1.0.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-## ✨ Features
+##  Features
 
-- **Cute Pixel Art Character** - An adorable animated character that responds to your study sessions
 - **Always on Top** - Stays visible on your screen while you work (300x400px window)
 - **Customizable Timers** - Set your own study time, break time, and total rounds
 - **Sound Effects** - Gentle audio feedback for timer events
 - **Music Player** - Play background music while studying
 - **YouTube Download** - Download music from YouTube and save as local playlists
 - **Progress Tracking** - Visual progress bar and round indicators
-- **Smooth Animations** - Delightful character animations that react to timer states
-- **Settings Panel** - Easy-to-use settings for personalization
+- **Smooth Animations** 
 - **Compact Design** - Small square window that doesn't take up much space
 
 ## 🛠️ Tech Stack
@@ -38,7 +36,7 @@ A delightful pixel art style pomodoro timer built with **Tauri + Svelte + TypeSc
 - **macOS**: `brew install yt-dlp`
 - **Linux**: `sudo apt install yt-dlp` or `pip install yt-dlp`
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Installation
 
@@ -72,7 +70,7 @@ npm run tauri:build
 
 Built applications will be in `src-tauri/target/release/bundle/`.
 
-## 🎨 Customization
+## Customization
 
 ### Adding Pixel Art
 
@@ -153,5 +151,5 @@ This project is licensed under the MIT License.
 
 ---
 
-Made with ❤️ for productive and enjoyable study sessions!
+Have fun guys i spent a weekend on this lol.
 
